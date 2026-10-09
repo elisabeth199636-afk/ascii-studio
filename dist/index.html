@@ -5,7 +5,7 @@
 <title>ASCII STUDIO · 字符图像工作台</title>
 <meta name="description" content="把图片变成字符艺术。上传图片，实时调整疏密、字符、明暗和色彩，导出你的 ASCII 作品。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232d3bd1'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-size='26' font-family='monospace' fill='white'%3Ea%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -45,13 +45,13 @@
   <div class="preview-bottom"><span class="mono character-legend"> . : - = + * # % @</span><span>像素的另一种语言。</span></div>
   <div class="export-bar"><div><strong>带走你的字符作品</strong><span id="export-dimensions">上传后即可导出</span></div><div class="export-actions"><label class="sr-only" for="format">导出格式</label><select id="format"><option value="png">PNG 图片</option><option value="svg">SVG 矢量</option><option value="txt">TXT 文本</option></select><button class="button dark" id="export"><svg><use href="#i-download"/></svg>导出</button></div></div>
  </section>
- <aside class="settings-panel panel" aria-label="效果参数"><div class="section-heading"><h2>效果参数</h2><span class="micro">ADJUST</span></div>
-  <div class="control-group density-group"><div class="control-heading"><label for="density">字符疏密</label><output for="density" id="density-value">120 列</output></div><input type="range" id="density" min="30" max="240" value="120" step="1"><div class="range-endpoints"><span>疏朗</span><span>细密</span></div></div>
-  <div class="control-group"><div class="control-heading"><label for="size">字符大小</label><output for="size" id="size-value">90%</output></div><input type="range" id="size" min="40" max="130" value="90" step="1"></div>
+ <aside class="settings-panel panel" aria-label="效果参数"><p id="numeric-help" class="sr-only">点击数值直接输入。有效数值会实时更新预览，按回车确认，按 Escape 撤销本次输入。超出范围的数值会在确认时调整到允许的范围。</p><div class="section-heading"><h2>效果参数</h2><span class="micro">ADJUST</span></div>
+  <div class="control-group density-group"><div class="control-heading"><label for="density">字符疏密</label><span class="numeric-editor" title="点击输入字符疏密，范围 30–240"><input id="density-value" type="number" min="30" max="240" step="1" value="120" aria-label="字符疏密数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">列</span></span></div><input type="range" id="density" min="30" max="240" value="120" step="1"><div class="range-endpoints"><span>疏朗</span><span>细密</span></div></div>
+  <div class="control-group"><div class="control-heading"><label for="size">字符大小</label><span class="numeric-editor" title="点击输入字符大小，范围 40–130"><input id="size-value" type="number" min="40" max="130" step="1" value="110" aria-label="字符大小数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">%</span></span></div><input type="range" id="size" min="40" max="130" value="90" step="1"></div>
   <div class="control-group"><div class="control-heading"><label for="charset">字符集</label></div><select id="charset"><option value="standard">经典 · . : - = + * # % @</option><option value="detail">精细 · 丰富灰度</option><option value="binary">二进制 · 0 1</option><option value="blocks">方块 · ░ ▒ ▓ █</option><option value="custom">自定义字符</option></select><div id="custom-wrap" hidden><label for="custom" class="field-hint">从浅到深排列字符（最多 80 个）</label><input type="text" id="custom" maxlength="160" value=" .:-=+*#%@" placeholder="输入字符"><span class="field-hint">可输入英文、数字或符号</span></div></div>
-  <div class="divider"></div><div class="control-group"><div class="control-heading"><label for="brightness">亮度</label><output for="brightness" id="brightness-value">0</output></div><input type="range" id="brightness" min="-80" max="80" value="0"></div>
-  <div class="control-group"><div class="control-heading"><label for="contrast">对比度</label><output for="contrast" id="contrast-value">1.15</output></div><input type="range" id="contrast" min="40" max="240" value="115"></div>
-  <div class="control-group"><div class="control-heading"><label for="threshold">留白阈值</label><output for="threshold" id="threshold-value">8%</output></div><input type="range" id="threshold" min="0" max="75" value="8"><p class="field-hint">增加留白，突出主体轮廓</p></div>
+  <div class="divider"></div><div class="control-group"><div class="control-heading"><label for="brightness">亮度</label><span class="numeric-editor" title="点击输入亮度，范围 -80–80"><input id="brightness-value" type="number" min="-80" max="80" step="1" value="0" aria-label="亮度数值" aria-describedby="numeric-help" autocomplete="off"><span class="numeric-unit" aria-hidden="true"></span></span></div><input type="range" id="brightness" min="-80" max="80" value="0"></div>
+  <div class="control-group"><div class="control-heading"><label for="contrast">对比度</label><span class="numeric-editor" title="点击输入对比度，范围 0.4–2.4"><input id="contrast-value" type="number" min="0.4" max="2.4" step="0.01" value="1.15" aria-label="对比度数值" aria-describedby="numeric-help" inputmode="decimal" autocomplete="off"><span class="numeric-unit" aria-hidden="true"></span></span></div><input type="range" id="contrast" min="40" max="240" value="115"></div>
+  <div class="control-group"><div class="control-heading"><label for="threshold">留白阈值</label><span class="numeric-editor" title="点击输入留白阈值，范围 0–75"><input id="threshold-value" type="number" min="0" max="75" step="1" value="8" aria-label="留白阈值数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">%</span></span></div><input type="range" id="threshold" min="0" max="75" value="8"><p class="field-hint">增加留白，突出主体轮廓</p></div>
   <div class="divider"></div><div class="control-group"><div class="control-heading"><label for="color-mode">色彩模式</label></div><select id="color-mode"><option value="original">保留原色</option><option value="mono">单色字符</option></select></div>
   <div class="color-row"><label class="color-control" for="foreground"><span>字符色</span><div><input type="color" id="foreground" value="#e9eee3"><span id="foreground-value" class="mono">原色</span></div></label><label class="color-control" for="background"><span>背景色</span><div><input type="color" id="background" value="#141a17"><span id="background-value" class="mono">141A17</span></div></label></div>
   <label class="toggle-row" for="invert"><span>反转明暗</span><input type="checkbox" id="invert" role="switch"><span class="toggle-track"></span></label>
@@ -61,5 +61,5 @@
 </main>
 <footer class="footer"><span>ASCII STUDIO <span class="footer-separator">/</span> 从像素到字符</span><span>图片仅在当前浏览器中处理</span></footer>
 <div id="toast" class="toast" role="status" aria-live="polite"></div><div class="drop-overlay" id="drop-overlay" hidden><svg><use href="#i-upload"/></svg><strong>松开，开始生成</strong></div>
-<script src="ascii-core.js?v=2" defer></script><script src="app.js?v=2" defer></script>
+<script src="ascii-core.js?v=2" defer></script><script src="app.js?v=3" defer></script>
 </body></html>

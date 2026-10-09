@@ -7,11 +7,60 @@ const state={...defaults};
 const ramps={standard:' .:-=+*#%@',detail:' .\'`^",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$',binary:' 01',blocks:' ░▒▓█'};
 const presets={original:{...defaults},classic:{...defaults,'color-mode':'mono',foreground:'#303534',background:'#efeee9',contrast:130,threshold:10},blue:{...defaults,'color-mode':'mono',foreground:'#eff3ff',background:'#302be2',contrast:140,threshold:16,density:100},terminal:{...defaults,'color-mode':'mono',foreground:'#a5ee99',background:'#10251c',charset:'binary',contrast:145,threshold:18,density:100}};
 function toast(message){clearTimeout(toastTimer);$('toast').textContent=message;$('toast').classList.add('visible');toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3500)}
-function controls(){for(const key of Object.keys(defaults)){const el=$(key);if(el.type==='checkbox')el.checked=state[key];else el.value=state[key];if(el.type==='range')el.style.setProperty('--fill',((Number(el.value)-Number(el.min))/(Number(el.max)-Number(el.min))*100)+'%')}$('density-value').textContent=state.density+' 列';$('size-value').textContent=state.size+'%';$('brightness-value').textContent=(state.brightness>0?'+':'')+state.brightness;$('contrast-value').textContent=(state.contrast/100).toFixed(2);$('threshold-value').textContent=state.threshold+'%';$('custom-wrap').hidden=state.charset!=='custom';$('foreground').disabled=state['color-mode']==='original';$('foreground-value').textContent=state['color-mode']==='original'?'原色':state.foreground.slice(1).toUpperCase();$('background-value').textContent=state.background.slice(1).toUpperCase()}
+const numericFields={density:{scale:1},size:{scale:1},brightness:{scale:1},contrast:{scale:100},threshold:{scale:1}};
+function syncNumericFields(preserveNumber=null){
+  for(const [key,{scale}] of Object.entries(numericFields)){
+    const input=$(key+'-value');
+    if(input.id===preserveNumber)continue;
+    input.value=scale===100?(state[key]/scale).toFixed(2):String(state[key]);
+    input.removeAttribute('aria-invalid');
+  }
+}
+function controls(preserveNumber=null){
+  for(const key of Object.keys(defaults)){
+    const el=$(key);
+    if(el.type==='checkbox')el.checked=state[key];else el.value=state[key];
+    if(el.type==='range')el.style.setProperty('--fill',((Number(el.value)-Number(el.min))/(Number(el.max)-Number(el.min))*100)+'%');
+  }
+  syncNumericFields(preserveNumber);
+  $('custom-wrap').hidden=state.charset!=='custom';
+  $('foreground').disabled=state['color-mode']==='original';
+  $('foreground-value').textContent=state['color-mode']==='original'?'原色':state.foreground.slice(1).toUpperCase();
+  $('background-value').textContent=state.background.slice(1).toUpperCase();
+}
 function schedule(){if(queued)cancelAnimationFrame(queued);queued=requestAnimationFrame(()=>{queued=0;render()})}
 function hexRGB(hex){return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))}
-function settingsChanged(){controls();document.querySelectorAll('.preset').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});schedule()}
+function settingsChanged(preserveNumber=null){controls(preserveNumber);document.querySelectorAll('.preset').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});schedule()}
 for(const key of Object.keys(defaults))$(key).addEventListener('input',()=>{const el=$(key);state[key]=el.type==='checkbox'?el.checked:el.type==='range'?Number(el.value):el.value;settingsChanged()});
+for(const [key,{scale}] of Object.entries(numericFields)){
+  const input=$(key+'-value');
+  let beforeEdit=state[key];
+  input.addEventListener('focus',()=>{beforeEdit=state[key];input.select()});
+  input.addEventListener('input',()=>{
+    const value=input.valueAsNumber;
+    const valid=Number.isFinite(value)&&value>=Number(input.min)&&value<=Number(input.max);
+    input.setAttribute('aria-invalid',String(input.value!==''&&!valid));
+    if(!valid)return; // Preserve incomplete or out-of-range drafts until commit.
+    state[key]=Math.round(value*scale);
+    settingsChanged(input.id);
+  });
+  input.addEventListener('blur',()=>{
+    const previous=state[key];
+    const value=input.valueAsNumber;
+    if(Number.isFinite(value)){
+      const bounded=Math.max(Number(input.min),Math.min(Number(input.max),value));
+      state[key]=Math.round(bounded*scale);
+      if(value!==bounded)toast(`数值已调整至允许范围 ${input.min}–${input.max}`);
+    }
+    if(state[key]!==previous)settingsChanged();else controls();
+  });
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();input.blur()}
+    if(event.key==='Escape'){
+      event.preventDefault();state[key]=beforeEdit;settingsChanged();input.blur();
+    }
+  });
+}
 function applyPreset(name){Object.assign(state,presets[name]);controls();document.querySelectorAll('.preset').forEach(b=>{const active=b.dataset.preset===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active)});setView('ascii');schedule()}
 document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
 $('reset').addEventListener('click',()=>{applyPreset('original');toast('已恢复默认参数')});
