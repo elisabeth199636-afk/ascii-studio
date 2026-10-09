@@ -1,7 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const canvas=$('canvas'),ctx=canvas.getContext('2d');
-let source=null,sourceUrl='',queued=0,currentView='ascii',rendered=null,loadId=0,toastTimer;
+let source=null,sourceTones={low:0,high:1},sourceUrl='',queued=0,currentView='ascii',rendered=null,loadId=0,toastTimer;
 const defaults={density:120,size:110,charset:'standard',custom:' .:-=+*#%@',brightness:0,contrast:115,threshold:8,'color-mode':'original',foreground:'#e9eee3',background:'#141a17',invert:false,transparent:false};
 const state={...defaults};
 const ramps={standard:' .:-=+*#%@',detail:' .\'`^",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$',binary:' 01',blocks:' ░▒▓█'};
@@ -15,15 +15,84 @@ for(const key of Object.keys(defaults))$(key).addEventListener('input',()=>{cons
 function applyPreset(name){Object.assign(state,presets[name]);controls();document.querySelectorAll('.preset').forEach(b=>{const active=b.dataset.preset===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active)});setView('ascii');schedule()}
 document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
 $('reset').addEventListener('click',()=>{applyPreset('original');toast('已恢复默认参数')});
-function setView(view){currentView=view;canvas.hidden=view!=='ascii';$('original-image').hidden=view!=='original'||!source;for(const k of ['ascii','original']){$('view-'+k).classList.toggle('selected',view===k);$('view-'+k).setAttribute('aria-pressed',view===k)}$('artboard').classList.toggle('is-transparent',state.transparent&&view==='ascii')}
+function setView(view){currentView=view;canvas.hidden=view!=='ascii';$('original-image').hidden=view!=='original'||!source;for(const k of ['ascii','original']){$('view-'+k).classList.toggle('selected',view===k);$('view-'+k).setAttribute('aria-pressed',view===k)}$('artboard').classList.toggle('is-transparent',state.transparent&&view==='ascii');syncPreviewScale()}
 $('view-ascii').addEventListener('click',()=>setView('ascii'));$('view-original').addEventListener('click',()=>setView('original'));
-$('fit').addEventListener('click',()=>{if(!source)return;const zoomed=$('artboard').classList.toggle('zoomed');$('fit').querySelector('span').textContent=zoomed?'适应画布':'放大查看';$('fit').setAttribute('aria-pressed',zoomed)});
+function syncPreviewScale(center=false){
+  if(!source)return;
+  const board=$('artboard'),zoomed=board.classList.contains('zoomed');
+  const scale=Math.min(board.clientWidth/source.naturalWidth,board.clientHeight/source.naturalHeight);
+  for(const element of [canvas,$('original-image')]){
+    element.style.width=zoomed?Math.round(source.naturalWidth*scale*2)+'px':'';
+    element.style.height=zoomed?Math.round(source.naturalHeight*scale*2)+'px':'';
+  }
+  if(center){board.scrollLeft=Math.max(0,(board.scrollWidth-board.clientWidth)/2);board.scrollTop=Math.max(0,(board.scrollHeight-board.clientHeight)/2)}
+}
+$('fit').addEventListener('click',()=>{
+  if(!source)return;
+  const zoomed=$('artboard').classList.toggle('zoomed');
+  $('fit').querySelector('span').textContent=zoomed?'适应画布':'放大查看';
+  $('fit').setAttribute('aria-pressed',zoomed);
+  syncPreviewScale(true);
+});
+new ResizeObserver(()=>syncPreviewScale()).observe($('artboard'));
+function analyseImage(image){
+  const sample=document.createElement('canvas');
+  const scale=Math.min(1,512/Math.max(image.naturalWidth,image.naturalHeight));
+  sample.width=Math.max(1,Math.round(image.naturalWidth*scale));
+  sample.height=Math.max(1,Math.round(image.naturalHeight*scale));
+  const context=sample.getContext('2d',{willReadFrequently:true});
+  context.drawImage(image,0,0,sample.width,sample.height);
+  return AsciiCore.analyseTones(context.getImageData(0,0,sample.width,sample.height).data);
+}
 for(const id of ['upload','replace','empty-upload'])$(id).addEventListener('click',()=>$('file-input').click());
 $('file-input').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);e.target.value=''});
 function setBusy(busy){document.body.classList.toggle('busy',busy);for(const id of ['export','export-top'])$(id).disabled=busy||!source}
 async function loadFile(file){if(!/^image\/(png|jpeg|webp|avif|gif|bmp)$/i.test(file.type)){toast('请选择 JPG、PNG、WebP、AVIF、GIF 或 BMP 图片');return}if(file.size>25*1024*1024){toast('图片超过 25 MB，请压缩后再试');return}const url=URL.createObjectURL(file);await loadImage(url,file.name,true)}
-async function loadImage(url,name,isObject=false){const ticket=++loadId;setBusy(true);try{const img=new Image();img.src=url;await img.decode();if(ticket!==loadId){if(isObject)URL.revokeObjectURL(url);return}if(img.naturalWidth*img.naturalHeight>80000000)throw new Error('oversize');if(sourceUrl.startsWith('blob:'))URL.revokeObjectURL(sourceUrl);source=img;sourceUrl=url;$('source-file').hidden=false;$('source-thumb').src=url;$('original-image').src=url;$('file-name').textContent=name;$('file-size').textContent=img.naturalWidth+' × '+img.naturalHeight;$('empty-state').hidden=true;setView('ascii');render();if(isObject)toast('图片已载入，可以开始调整了')}catch(error){if(isObject)URL.revokeObjectURL(url);if(ticket===loadId)toast(error.message==='oversize'?'图片尺寸过大，请缩小到 8000 万像素以内':'这张图片无法读取，请换一张图片重试')}finally{if(ticket===loadId)setBusy(false)}}
-function render(){if(!source)return;const start=performance.now();const cols=state.density;const rows=Math.max(1,Math.min(400,Math.round(cols*source.naturalHeight/source.naturalWidth*.58)));const sampler=document.createElement('canvas');sampler.width=cols;sampler.height=rows;const sample=sampler.getContext('2d',{willReadFrequently:true});sample.drawImage(source,0,0,cols,rows);const pixels=sample.getImageData(0,0,cols,rows).data;const aspect=source.naturalHeight/source.naturalWidth;const exportScale=Math.min(1,4096/(cols*12),4096/(cols*12*aspect));const width=Math.max(1,Math.round(cols*12*exportScale)),height=Math.max(1,Math.round(width*aspect));const cellW=width/cols,cellH=height/rows;canvas.width=width;canvas.height=height;const fontSize=Math.min(cellH,cellW/.6)*state.size/100;ctx.clearRect(0,0,canvas.width,canvas.height);if(!state.transparent){ctx.fillStyle=state.background;ctx.fillRect(0,0,canvas.width,canvas.height)}ctx.font=fontSize+'px "Courier New", monospace';ctx.textBaseline='middle';ctx.textAlign='center';const chars=Array.from(state.charset==='custom'?(state.custom.trim()?state.custom:' .:-=+*#%@'):ramps[state.charset]).slice(0,80);const backgroundRGB=hexRGB(state.background);const lightBackground=(backgroundRGB[0]*.2126+backgroundRGB[1]*.7152+backgroundRGB[2]*.0722)>145;const mono=state['color-mode']==='mono';let cells=[],lines=[],drawn=0;for(let y=0;y<rows;y++){let line='';for(let x=0;x<cols;x++){const p=(y*cols+x)*4;const alpha=pixels[p+3]/255;const rgb=[pixels[p],pixels[p+1],pixels[p+2]];let lum=(rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722)/255;lum=Math.max(0,Math.min(1,(lum-.5)*(state.contrast/100)+.5+state.brightness/100));let strength=(lightBackground?1-lum:lum);if(state.invert)strength=1-strength;strength*=alpha;let char=' ';if(strength>=state.threshold/100&&alpha>.02)char=chars[Math.min(chars.length-1,Math.floor(strength*(chars.length-.0001)))];line+=char;if(char===' ')continue;const color=mono?state.foreground:`rgb(${rgb.join(',')})`;ctx.fillStyle=color;ctx.fillText(char,(x+.5)*cellW,(y+.5)*cellH);cells.push({x,y,char,color});drawn++}lines.push(line)}rendered={cols,rows,cellW,cellH,fontSize,cells,text:lines.join('\n'),width:canvas.width,height:canvas.height};$('render-info').textContent=`${cols} × ${rows} 字符 · ${drawn.toLocaleString()} 个可见`;$('export-dimensions').textContent=`${canvas.width} × ${canvas.height} px`;$('artboard').classList.toggle('is-transparent',state.transparent&&currentView==='ascii');canvas.dataset.renderMs=(performance.now()-start).toFixed(1)}
+async function loadImage(url,name,isObject=false){const ticket=++loadId;setBusy(true);try{const img=new Image();img.src=url;await img.decode();if(ticket!==loadId){if(isObject)URL.revokeObjectURL(url);return}if(img.naturalWidth*img.naturalHeight>80000000)throw new Error('oversize');const tones=analyseImage(img);if(sourceUrl.startsWith('blob:'))URL.revokeObjectURL(sourceUrl);source=img;sourceTones=tones;sourceUrl=url;$('source-file').hidden=false;$('source-thumb').src=url;$('original-image').src=url;$('file-name').textContent=name;$('file-size').textContent=img.naturalWidth+' × '+img.naturalHeight;$('empty-state').hidden=true;setView('ascii');render();if(isObject)toast('图片已载入，可以开始调整了')}catch(error){if(isObject)URL.revokeObjectURL(url);if(ticket===loadId)toast(error.message==='oversize'?'图片尺寸过大，请缩小到 8000 万像素以内':'这张图片无法读取，请换一张图片重试')}finally{if(ticket===loadId)setBusy(false)}}
+function render(){
+  if(!source)return;
+  const start=performance.now();
+  const board=$('artboard'),scrollLeft=board.scrollLeft,scrollTop=board.scrollTop;
+  const cols=state.density;
+  const rows=Math.max(1,Math.min(400,Math.round(cols*source.naturalHeight/source.naturalWidth*.58)));
+  const sampler=document.createElement('canvas');
+  sampler.width=cols;sampler.height=rows;
+  const sample=sampler.getContext('2d',{willReadFrequently:true});
+  sample.drawImage(source,0,0,cols,rows);
+  const pixels=sample.getImageData(0,0,cols,rows).data;
+  const {width,height,cellW,cellH,fontSize}=AsciiCore.outputGeometry(source.naturalWidth,source.naturalHeight,cols,rows,state.size);
+  if(canvas.width!==width)canvas.width=width;
+  if(canvas.height!==height)canvas.height=height;
+  ctx.clearRect(0,0,width,height);
+  if(!state.transparent){ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height)}
+  ctx.font=fontSize+'px "Courier New", monospace';ctx.textBaseline='middle';ctx.textAlign='center';
+  const chars=Array.from(state.charset==='custom'?(state.custom.trim()?state.custom:' .:-=+*#%@'):ramps[state.charset]).slice(0,80);
+  const backgroundRGB=hexRGB(state.background);
+  const lightBackground=(backgroundRGB[0]*.2126+backgroundRGB[1]*.7152+backgroundRGB[2]*.0722)>145;
+  const settings={...state,lightBackground};
+  const mono=state['color-mode']==='mono';
+  const cells=[],lines=[];
+  for(let y=0;y<rows;y++){
+    let line='';
+    for(let x=0;x<cols;x++){
+      const p=(y*cols+x)*4;
+      const char=AsciiCore.mapCell(pixels.subarray(p,p+4),settings,sourceTones,chars);
+      line+=char;
+      if(char===' ')continue;
+      const color=mono?state.foreground:`rgb(${pixels[p]},${pixels[p+1]},${pixels[p+2]})`;
+      ctx.fillStyle=color;ctx.fillText(char,(x+.5)*cellW,(y+.5)*cellH);
+      cells.push({x,y,char,color});
+    }
+    lines.push(line);
+  }
+  rendered={cols,rows,cellW,cellH,fontSize,cells,text:lines.join('\n'),width,height};
+  $('render-info').textContent=`${cols} × ${rows} 字符 · ${cells.length.toLocaleString()} 个可见`;
+  $('export-dimensions').textContent=`${width} × ${height} px`;
+  $('artboard').classList.toggle('is-transparent',state.transparent&&currentView==='ascii');
+  syncPreviewScale();
+  board.scrollLeft=scrollLeft;board.scrollTop=scrollTop;
+  canvas.dataset.renderMs=(performance.now()-start).toFixed(1);
+}
 let dragDepth=0;window.addEventListener('dragenter',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();dragDepth++;$('drop-overlay').hidden=false}});window.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files'))e.preventDefault()});window.addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('drop-overlay').hidden=true});window.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop-overlay').hidden=true;const file=e.dataTransfer.files[0];if(file)loadFile(file)});window.addEventListener('paste',e=>{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;const item=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));if(item){e.preventDefault();loadFile(item.getAsFile())}});
 function escapeXML(text){return text.replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c]))}
 async function exportArt(){if(!source)return toast('请先选择一张图片');if(queued){cancelAnimationFrame(queued);queued=0;render()}const format=$('format').value;const r=rendered;let blob;try{if(format==='png')blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));else if(format==='txt')blob=new Blob([r.text],{type:'text/plain;charset=utf-8'});else{const bg=state.transparent?'':`<rect width="100%" height="100%" fill="${state.background}"/>`;const chars=r.cells.map(c=>`<text x="${((c.x+.5)*r.cellW).toFixed(2)}" y="${((c.y+.5)*r.cellH).toFixed(2)}" fill="${c.color}">${escapeXML(c.char)}</text>`).join('');blob=new Blob([`<svg xmlns="http://www.w3.org/2000/svg" width="${r.width}" height="${r.height}" viewBox="0 0 ${r.width} ${r.height}">${bg}<g font-family="Courier New,monospace" font-size="${r.fontSize}" text-anchor="middle" dominant-baseline="central">${chars}</g></svg>`],{type:'image/svg+xml;charset=utf-8'})}if(!blob)throw new Error('export');const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=($('file-name').textContent.replace(/\.[^.]+$/,'')||'image')+'-ascii.'+format;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast(format==='txt'?'文本已导出，用等宽字体打开效果更好':'作品已导出')}catch{toast('导出失败，请降低疏密后重试')}}
