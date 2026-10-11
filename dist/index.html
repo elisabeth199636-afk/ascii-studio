@@ -5,7 +5,7 @@
 <title>ASCII STUDIO · 字符图像工作台</title>
 <meta name="description" content="把图片变成字符艺术。上传图片，实时调整疏密、字符、明暗和色彩，导出你的 ASCII 作品。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232d3bd1'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-size='26' font-family='monospace' fill='white'%3Ea%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -33,6 +33,15 @@
    <button class="preset" data-preset="classic" aria-pressed="false"><span class="preset-art art-classic">. : + *<br>+ # @ %<br> : * + .</span><span><strong>黑白印记</strong><small>纸面上的字符颗粒</small></span><span class="preset-check"><svg><use href="#i-check"/></svg></span></button>
    <button class="preset" data-preset="blue" aria-pressed="false"><span class="preset-art art-blue">. : + *<br>+ # @ %<br> : * + .</span><span><strong>蓝色信号</strong><small>鲜明的蓝白字符</small></span><span class="preset-check"><svg><use href="#i-check"/></svg></span></button>
    <button class="preset" data-preset="terminal" aria-pressed="false"><span class="preset-art art-terminal">0 1 1 0<br>1 0 1 1<br>0 1 0 0</span><span><strong>荧光终端</strong><small>绿色的数字回声</small></span><span class="preset-check"><svg><use href="#i-check"/></svg></span></button>
+  </div>
+  <div class="preset-colors" role="group" aria-label="自定义配色">
+   <div class="control-heading"><label for="color-mode">字符颜色模式</label></div><select id="color-mode"><option value="original">保留原色</option><option value="mono">单色字符</option></select>
+   <div class="palette-fields">
+    <div class="palette-field"><label for="background-value">背景色</label><div class="palette-input"><input type="color" id="background" value="#141a17" aria-label="选择背景色"><input type="text" id="background-value" value="#141A17" aria-label="背景色 HEX" aria-describedby="color-help" maxlength="7" spellcheck="false" autocomplete="off"></div></div>
+    <div class="palette-field"><label for="foreground-value">字符色</label><div class="palette-input"><input type="color" id="foreground" value="#e9eee3" aria-label="选择字符色"><input type="text" id="foreground-value" value="#E9EEE3" aria-label="字符色 HEX" aria-describedby="color-help" maxlength="7" spellcheck="false" autocomplete="off"></div></div>
+   </div>
+   <label class="toggle-row" for="transparent"><span>透明背景</span><input type="checkbox" id="transparent" role="switch"><span class="toggle-track"></span></label>
+   <p class="field-hint palette-help" id="color-help">点击色块选色，或输入 HEX 色值。</p>
   </div></section>
   <div class="local-help"><svg><use href="#i-image"/></svg><p>每一张图片，都有另一种表达。<br><span>试着从疏密开始调整。</span></p></div>
  </aside>
@@ -52,14 +61,12 @@
   <div class="divider"></div><div class="control-group"><div class="control-heading"><label for="brightness">亮度</label><span class="numeric-editor" title="点击输入亮度，范围 -80–80"><input id="brightness-value" type="number" min="-80" max="80" step="1" value="0" aria-label="亮度数值" aria-describedby="numeric-help" autocomplete="off"><span class="numeric-unit" aria-hidden="true"></span></span></div><input type="range" id="brightness" min="-80" max="80" value="0"></div>
   <div class="control-group"><div class="control-heading"><label for="contrast">对比度</label><span class="numeric-editor" title="点击输入对比度，范围 0.4–2.4"><input id="contrast-value" type="number" min="0.4" max="2.4" step="0.01" value="1.15" aria-label="对比度数值" aria-describedby="numeric-help" inputmode="decimal" autocomplete="off"><span class="numeric-unit" aria-hidden="true"></span></span></div><input type="range" id="contrast" min="40" max="240" value="115"></div>
   <div class="control-group"><div class="control-heading"><label for="threshold">留白阈值</label><span class="numeric-editor" title="点击输入留白阈值，范围 0–75"><input id="threshold-value" type="number" min="0" max="75" step="1" value="8" aria-label="留白阈值数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">%</span></span></div><input type="range" id="threshold" min="0" max="75" value="8"><p class="field-hint">增加留白，突出主体轮廓</p></div>
-  <div class="divider"></div><div class="control-group"><div class="control-heading"><label for="color-mode">色彩模式</label></div><select id="color-mode"><option value="original">保留原色</option><option value="mono">单色字符</option></select></div>
-  <div class="color-row"><label class="color-control" for="foreground"><span>字符色</span><div><input type="color" id="foreground" value="#e9eee3"><span id="foreground-value" class="mono">原色</span></div></label><label class="color-control" for="background"><span>背景色</span><div><input type="color" id="background" value="#141a17"><span id="background-value" class="mono">141A17</span></div></label></div>
+  <div class="divider"></div>
   <label class="toggle-row" for="invert"><span>反转明暗</span><input type="checkbox" id="invert" role="switch"><span class="toggle-track"></span></label>
-  <label class="toggle-row" for="transparent"><span>透明背景</span><input type="checkbox" id="transparent" role="switch"><span class="toggle-track"></span></label>
   <div class="settings-footer"><span class="mono">Aa</span><p>轻轻移动滑块，<br>找到刚刚好的颗粒感。</p></div>
  </aside>
 </main>
 <footer class="footer"><span>ASCII STUDIO <span class="footer-separator">/</span> 从像素到字符</span><span>图片仅在当前浏览器中处理</span></footer>
 <div id="toast" class="toast" role="status" aria-live="polite"></div><div class="drop-overlay" id="drop-overlay" hidden><svg><use href="#i-upload"/></svg><strong>松开，开始生成</strong></div>
-<script src="ascii-core.js?v=2" defer></script><script src="app.js?v=4" defer></script>
+<script src="ascii-core.js?v=2" defer></script><script src="app.js?v=5" defer></script>
 </body></html>

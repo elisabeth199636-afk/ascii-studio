@@ -24,14 +24,56 @@ function controls(preserveNumber=null){
   }
   syncNumericFields(preserveNumber);
   $('custom-wrap').hidden=state.charset!=='custom';
-  $('foreground').disabled=state['color-mode']==='original';
-  $('foreground-value').textContent=state['color-mode']==='original'?'原色':state.foreground.slice(1).toUpperCase();
-  $('background-value').textContent=state.background.slice(1).toUpperCase();
+  for(const key of ['foreground','background']){
+    const input=$(key+'-value');
+    if(input.id===preserveNumber)continue;
+    input.value=state[key].toUpperCase();input.removeAttribute('aria-invalid');
+  }
+  $('color-help').textContent=state['color-mode']==='original'?'字符沿用原图颜色；修改字符色会切换为单色。':state.transparent?'当前为透明背景；修改背景色会恢复实色背景。':'点击色块选色，或输入 HEX 色值。';
 }
 function schedule(){if(queued)cancelAnimationFrame(queued);queued=requestAnimationFrame(()=>{queued=0;render()})}
 function hexRGB(hex){return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))}
 function settingsChanged(preserveNumber=null){controls(preserveNumber);document.querySelectorAll('.preset').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});schedule()}
-for(const key of Object.keys(defaults))$(key).addEventListener('input',()=>{const el=$(key);state[key]=el.type==='checkbox'?el.checked:el.type==='range'?Number(el.value):el.value;settingsChanged()});
+function applyColor(key,value,preserveInput=null){
+  state[key]=value;
+  if(key==='foreground')state['color-mode']='mono';
+  if(key==='background')state.transparent=false;
+  settingsChanged(preserveInput);
+}
+for(const key of Object.keys(defaults))$(key).addEventListener('input',()=>{
+  const el=$(key);
+  if(key==='foreground'||key==='background'){applyColor(key,el.value);return}
+  state[key]=el.type==='checkbox'?el.checked:el.type==='range'?Number(el.value):el.value;settingsChanged();
+});
+function parseHex(value){
+  const hex=value.trim().replace(/^#/,'');
+  if(/^[\da-f]{6}$/i.test(hex))return '#'+hex.toLowerCase();
+  if(/^[\da-f]{3}$/i.test(hex))return '#'+Array.from(hex,c=>c+c).join('').toLowerCase();
+  return null;
+}
+for(const key of ['foreground','background']){
+  const input=$(key+'-value');
+  let beforeEdit,cancelled=false;
+  input.addEventListener('focus',()=>{cancelled=false;beforeEdit={color:state[key],mode:state['color-mode'],transparent:state.transparent};input.select()});
+  input.addEventListener('input',()=>{
+    const color=parseHex(input.value);
+    input.removeAttribute('aria-invalid');
+    if(color)applyColor(key,color,input.id);
+  });
+  input.addEventListener('blur',()=>{
+    if(cancelled){cancelled=false;return}
+    const color=parseHex(input.value);
+    if(color){applyColor(key,color);return}
+    input.setAttribute('aria-invalid','true');
+    toast('请输入 3 位或 6 位 HEX 色值，例如 #302BE2');
+  });
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();input.blur()}
+    if(event.key==='Escape'){
+      event.preventDefault();cancelled=true;state[key]=beforeEdit.color;state['color-mode']=beforeEdit.mode;state.transparent=beforeEdit.transparent;settingsChanged();input.blur();
+    }
+  });
+}
 for(const [key,{scale}] of Object.entries(numericFields)){
   const input=$(key+'-value');
   let beforeEdit=state[key];
