@@ -13,3 +13,7 @@
 .density-group .numeric-editor{background:#ebedf8;color:#343ead}
 .density-group .numeric-editor:focus-within{background:#fff}
 @media(max-width:650px){.numeric-editor{min-height:30px;padding:0 3px}.numeric-editor input[type=number]{font-size:13px}.control-heading{gap:5px}}
+
+/* Keep the upload prompt at the preview centre before an image is chosen. */
+.artboard .empty-state{position:absolute;inset:0;justify-content:center;padding:24px}
+.artboard:has(.empty-state:not([hidden])){filter:none}
