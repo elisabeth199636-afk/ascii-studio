@@ -17,6 +17,21 @@
 /* Keep the upload prompt at the preview centre before an image is chosen. */
 .artboard .empty-state{position:absolute;inset:0;justify-content:center;padding:24px}
 .artboard:has(.empty-state:not([hidden])){filter:none}
+.playback-bar{display:flex;align-items:center;gap:10px;margin-top:12px;min-height:36px}
+.playback-bar[hidden],.motion-settings [hidden],.gif-quality[hidden],.export-progress[hidden]{display:none}
+.playback-bar .playback-button{min-width:58px;padding:0 10px;font-size:12px;min-height:32px}
+.playback-bar input{flex:1;min-width:40px}.playback-bar .mono{font-size:11px;color:#596567;white-space:nowrap}
+.motion-settings{border-top:1px solid var(--line);margin-top:18px;padding-top:22px;grid-column:1/-1}
+.motion-heading{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:17px}
+.motion-heading h2{font-size:14px;margin:0;font-weight:600}.motion-badge{font-size:11px;color:#596567}
+.field-label{display:block;font-size:13px;margin-bottom:9px}
+.motion-settings .field-hint{color:#596567}.motion-settings .numeric-editor input{width:4.5ch}
+.export-actions{flex-wrap:wrap;justify-content:flex-end}.export-bar{flex-wrap:wrap}.export-bar>div:first-child{flex:1;min-width:160px}
+.export-bar #export-dimensions{max-width:320px;line-height:1.6}
+.export-progress{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:20px;width:min(500px,calc(100vw - 32px));padding:18px 20px;border:1px solid #bbc2cd;background:#fff;border-radius:8px;z-index:30;box-shadow:0 10px 40px #17292326}
+.export-progress>div{flex:1;min-width:0}.export-progress strong{font-weight:500;font-size:14px;display:block}.export-progress progress{width:100%;height:7px;accent-color:var(--accent);margin:12px 0 8px}.export-progress span{display:block;font:12px var(--mono);color:#596567}.export-progress .button{flex-shrink:0}
+body.exporting .workspace{opacity:.7}.artboard #original-image{object-fit:contain}
+@media(max-width:650px){.playback-bar{gap:6px}.playback-bar .mono{font-size:10px}.export-actions{gap:6px}.export-actions select{width:116px}.motion-settings #motion-controls{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}.motion-settings #motion-controls[hidden]{display:none}.motion-settings #motion-controls>.field-hint{grid-column:1/-1}.motion-settings .control-heading label{font-size:13px}.motion-settings .numeric-editor input{width:4ch}.export-bar{gap:12px}.preview-panel{height:650px}}
 
 /* Keep the palette with the presets, with both visual and precise color inputs. */
 .preset-colors{margin:12px 6px 6px;padding-top:17px;border-top:1px solid var(--line)}

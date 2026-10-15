@@ -5,7 +5,7 @@
 <title>ASCII STUDIO · 字符图像工作台</title>
 <meta name="description" content="把图片变成字符艺术。上传图片，实时调整疏密、字符、明暗和色彩，导出你的 ASCII 作品。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232d3bd1'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-size='26' font-family='monospace' fill='white'%3Ea%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -25,7 +25,7 @@
  <aside class="source-panel" aria-label="图片与风格">
   <section class="panel source-section"><div class="section-heading"><h2>源图像</h2><span class="micro">SOURCE</span></div>
    <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/bmp" hidden>
-   <button class="upload-zone" id="upload" aria-describedby="upload-help"><span class="upload-icon"><svg><use href="#i-upload"/></svg></span><strong>点击或拖入图片</strong><span id="upload-help">JPG / PNG / WebP 等 · 最大 25 MB</span></button>
+   <button class="upload-zone" id="upload" aria-describedby="upload-help"><span class="upload-icon"><svg><use href="#i-upload"/></svg></span><strong>点击或拖入图片</strong><span id="upload-help">GIF 动图 / JPG / PNG / WebP · 最大 25 MB</span></button>
    <div class="source-file" id="source-file" hidden><img id="source-thumb" alt="当前源图片缩略图"><div><strong id="file-name">等待图片</strong><span class="mono" id="file-size">—</span></div><button class="icon-button" id="replace" aria-label="更换图片"><svg><use href="#i-image"/></svg></button></div>
   </section>
   <section class="panel preset-section"><div class="section-heading"><h2>风格预设</h2><span class="micro">PRESETS</span></div><div class="presets" id="presets">
@@ -48,11 +48,12 @@
  <section class="preview-panel" aria-label="字符画预览">
   <div class="preview-toolbar"><div class="preview-title"><span class="live-dot"></span><h1>实时预览</h1></div><div class="segmented" aria-label="预览模式"><button class="selected" id="view-ascii" aria-pressed="true">字符画</button><button id="view-original" aria-pressed="false">原图</button></div></div>
   <div class="stage" id="stage"><span class="stage-caption mono">IMAGE → CHARACTERS</span>
-   <div class="artboard" id="artboard"><canvas id="canvas" aria-label="生成的 ASCII 字符画" role="img" hidden></canvas><img id="original-image" alt="上传的原始图片" hidden><div class="empty-state" id="empty-state"><strong>从一张图片开始</strong><span>拖入图片，让像素变成字符。</span><button class="button" id="empty-upload">选择图片</button></div></div>
+   <div class="artboard" id="artboard"><canvas id="canvas" aria-label="生成的 ASCII 字符画" role="img" hidden></canvas><canvas id="original-image" role="img" aria-label="上传的原始图片当前帧" hidden></canvas><div class="empty-state" id="empty-state"><strong>从一张图片开始</strong><span>拖入图片，让像素变成字符。</span><button class="button" id="empty-upload">选择图片</button></div></div>
    <div class="stage-bottom"><span id="render-info" class="mono">等待图像</span><button class="fit-button" id="fit" disabled><svg><use href="#i-expand"/></svg><span>放大查看</span></button></div>
   </div>
+  <div class="playback-bar" id="playback-bar" hidden><button class="button playback-button" id="play-toggle" aria-label="播放动画">播放</button><button class="icon-button" id="restart" aria-label="从头播放"><svg><use href="#i-reset"/></svg></button><input type="range" id="timeline" min="0" max="1000" step="1" value="0" aria-label="动画时间轴"><span class="mono" id="play-time">0.0 / 4.0 s</span></div>
   <div class="preview-bottom"><span class="mono character-legend"> . : - = + * # % @</span><span>像素的另一种语言。</span></div>
-  <div class="export-bar"><div><strong>带走你的字符作品</strong><span id="export-dimensions">上传后即可导出</span></div><div class="export-actions"><label class="sr-only" for="format">导出格式</label><select id="format"><option value="png">PNG 图片</option><option value="svg">SVG 矢量</option><option value="txt">TXT 文本</option></select><button class="button dark" id="export" disabled><svg><use href="#i-download"/></svg>导出</button></div></div>
+  <div class="export-bar"><div><strong>带走你的字符作品</strong><span id="export-dimensions">上传后即可导出</span></div><div class="export-actions"><label class="sr-only" for="format">导出格式</label><select id="format"><option value="png">PNG 当前帧</option><option value="gif">GIF 动画</option><option value="svg">SVG 当前帧</option><option value="txt">TXT 当前帧</option></select><label class="gif-quality" id="gif-quality-wrap" hidden><span class="sr-only">GIF 画质</span><select id="gif-quality" aria-label="GIF 画质"><option value="480">轻巧 · 480 px</option><option value="720" selected>清晰 · 720 px</option><option value="960">精细 · 960 px</option></select></label><button class="button dark" id="export" disabled><svg><use href="#i-download"/></svg>导出</button></div></div>
  </section>
  <aside class="settings-panel panel" aria-label="效果参数"><p id="numeric-help" class="sr-only">点击数值直接输入。有效数值会实时更新预览，按回车确认，按 Escape 撤销本次输入。超出范围的数值会在确认时调整到允许的范围。</p><div class="section-heading"><h2>效果参数</h2><span class="micro">ADJUST</span></div>
   <div class="control-group density-group"><div class="control-heading"><label for="density">字符疏密</label><span class="numeric-editor" title="点击输入字符疏密，范围 30–240"><input id="density-value" type="number" min="30" max="240" step="1" value="120" aria-label="字符疏密数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">列</span></span></div><input type="range" id="density" min="30" max="240" value="120" step="1"><div class="range-endpoints"><span>疏朗</span><span>细密</span></div></div>
@@ -63,10 +64,23 @@
   <div class="control-group"><div class="control-heading"><label for="threshold">留白阈值</label><span class="numeric-editor" title="点击输入留白阈值，范围 0–75"><input id="threshold-value" type="number" min="0" max="75" step="1" value="8" aria-label="留白阈值数值" aria-describedby="numeric-help" inputmode="numeric" autocomplete="off"><span class="numeric-unit" aria-hidden="true">%</span></span></div><input type="range" id="threshold" min="0" max="75" value="8"><p class="field-hint">增加留白，突出主体轮廓</p></div>
   <div class="divider"></div>
   <label class="toggle-row" for="invert"><span>反转明暗</span><input type="checkbox" id="invert" role="switch"><span class="toggle-track"></span></label>
+  <section class="motion-settings" aria-labelledby="motion-heading">
+   <div class="motion-heading"><h2 id="motion-heading">动画</h2><span class="motion-badge" id="source-kind">静态图片也能动起来</span></div>
+   <div class="control-group"><label for="motion-effect" class="field-label">动画效果</label><select id="motion-effect"><option value="none">无额外效果</option><option value="breathe">轻柔呼吸</option><option value="wave">流动波浪</option><option value="scan">扫描显影</option><option value="scramble">字符跳动</option></select><p class="field-hint" id="motion-help">上传 GIF 保留原始动作；静态图可选择动画效果。</p></div>
+   <div id="motion-controls" hidden>
+    <div class="control-group" id="motion-speed-group"><div class="control-heading"><label for="motion-speed">播放速度</label><span class="numeric-editor" title="点击输入播放速度"><input type="number" id="motion-speed-value" min="0.25" max="3" step="0.25" value="1" aria-label="播放速度数值" inputmode="decimal"><span class="numeric-unit" aria-hidden="true">×</span></span></div><input type="range" id="motion-speed" min="0.25" max="3" step="0.25" value="1"></div>
+    <div class="control-group" id="motion-intensity-group"><div class="control-heading"><label for="motion-intensity">效果强度</label><span class="numeric-editor" title="点击输入效果强度"><input type="number" id="motion-intensity-value" min="0" max="100" step="1" value="50" aria-label="效果强度数值" inputmode="decimal"><span class="numeric-unit" aria-hidden="true">%</span></span></div><input type="range" id="motion-intensity" min="0" max="100" step="1" value="50"></div>
+    <div class="control-group" id="motion-fps-group"><div class="control-heading"><label for="motion-fps">动画帧率</label><span class="numeric-editor" title="点击输入动画帧率"><input type="number" id="motion-fps-value" min="6" max="24" step="1" value="12" aria-label="动画帧率数值" inputmode="decimal"><span class="numeric-unit" aria-hidden="true">fps</span></span></div><input type="range" id="motion-fps" min="6" max="24" step="1" value="12"></div>
+    <div class="control-group" id="motion-duration-group"><div class="control-heading"><label for="motion-duration">循环时长</label><span class="numeric-editor" title="点击输入循环时长"><input type="number" id="motion-duration-value" min="2" max="8" step="0.5" value="4" aria-label="循环时长数值" inputmode="decimal"><span class="numeric-unit" aria-hidden="true">s</span></span></div><input type="range" id="motion-duration" min="2" max="8" step="0.5" value="4"></div>
+    <div class="control-group" id="motion-direction-group" hidden><label for="motion-direction" class="field-label">流动方向</label><select id="motion-direction"><option value="1">正向</option><option value="-1">反向</option></select></div>
+    <p class="field-hint">帧率越高越流畅，GIF 也越大。预览性能受图片疏密影响。</p>
+   </div>
+  </section>
   <div class="settings-footer"><span class="mono">Aa</span><p>轻轻移动滑块，<br>找到刚刚好的颗粒感。</p></div>
  </aside>
 </main>
 <footer class="footer"><span>ASCII STUDIO <span class="footer-separator">/</span> 从像素到字符</span><span>图片仅在当前浏览器中处理</span></footer>
 <div id="toast" class="toast" role="status" aria-live="polite"></div><div class="drop-overlay" id="drop-overlay" hidden><svg><use href="#i-upload"/></svg><strong>松开，开始生成</strong></div>
-<script src="ascii-core.js?v=2" defer></script><script src="app.js?v=5" defer></script>
+<div class="export-progress" id="export-progress" hidden role="region" aria-label="文件处理进度"><div><strong id="progress-label">正在准备动画</strong><progress id="progress-bar" max="100" value="0"></progress><span id="progress-note" role="status" aria-live="polite"></span></div><button class="button" id="cancel-export">取消</button></div>
+<script src="vendor/omggif.js" defer></script><script src="vendor/gifenc.js" defer></script><script src="gif-source.js?v=1" defer></script><script src="gif-export.js?v=1" defer></script><script src="motion-core.js?v=1" defer></script><script src="ascii-core.js?v=2" defer></script><script src="app.js?v=6" defer></script>
 </body></html>
