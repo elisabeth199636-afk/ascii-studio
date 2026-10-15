@@ -4,7 +4,7 @@
 
 [在线使用](https://ascii-studio-juzi.elisabeth199636.chatgpt.site) · [GitHub 仓库](https://github.com/elisabeth199636-afk/ascii-studio)
 
-这是与 [UI Motion Collection](https://github.com/elisabeth199636-afk/ui-motion-collection) 并列维护的独立项目。网站和仓库目前均为私有，需要相应账号的访问权限。
+这是与 [UI Motion Collection](https://github.com/elisabeth199636-afk/ui-motion-collection) 并列维护的独立项目。GitHub 仓库公开，可查看源码并在本地运行；在线网站目前仍为私有，需要相应账号的访问权限。
 
 打开 `dist/index.html` 即可上传本地图片；初始页面显示居中的上传提示，不会自动载入参考图片。上传的图片仅存在当前浏览器内存中，不会发送到服务器。
 
