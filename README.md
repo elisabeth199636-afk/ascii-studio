@@ -2,9 +2,11 @@
 
 参考用户提供的视频制作的中文 ASCII 图片与动画生成器，纯 HTML / CSS / JavaScript，无需安装或构建。GIF 编解码库随项目本地提供，不依赖 CDN。
 
-[在线使用](https://ascii-studio-juzi.elisabeth199636.chatgpt.site) · [GitHub 仓库](https://github.com/elisabeth199636-afk/ascii-studio)
+[在线使用 · 无需登录](https://ascii-studio-juzi.elisabeth199636.chatgpt.site) · [GitHub 仓库](https://github.com/elisabeth199636-afk/ascii-studio)
 
-这是与 [UI Motion Collection](https://github.com/elisabeth199636-afk/ui-motion-collection) 并列维护的独立项目。GitHub 仓库公开，可查看源码并在本地运行；在线网站目前仍为私有，需要相应账号的访问权限。
+这是与 [UI Motion Collection](https://github.com/elisabeth199636-afk/ui-motion-collection) 并列维护的独立项目。GitHub 仓库与在线网站均已公开，任何人都可以点击上方「在线使用」，无需注册或登录 ChatGPT / GitHub 账号。
+
+使用方式：打开网站 → 上传图片或 GIF → 调整字符、配色及动画参数 → 导出作品。图像转换和动画编码均在访客自己的浏览器中执行，不调用 AI API，也无需提供 API Key。
 
 打开 `dist/index.html` 即可上传本地图片；初始页面显示居中的上传提示，不会自动载入参考图片。上传的图片仅存在当前浏览器内存中，不会发送到服务器。
 
